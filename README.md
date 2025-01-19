@@ -3,7 +3,7 @@
 ## Simple representation of a Qubit.
 With some gates implemented.
 
-###Run:
+### Run:
 ```bash
 $ cargo add rand
 $ cargo run
