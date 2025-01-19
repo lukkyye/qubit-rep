@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{fmt::Debug,ops::{Add, Mul}};
+use std::{fmt::{Debug, LowerExp},ops::{Add, Mul}};
 use rand::{self, Rng};
 #[derive(PartialEq, Clone, Copy)]
 enum Forms{
@@ -64,18 +64,20 @@ impl Complex {
             self.values.0
         }
     }
-    fn scale_bin(&self, k: f32)->Complex{
-        if self.rep==Forms::Bin {
-            Complex::new(self.values.0/k, self.values.1/k, Forms::Bin)
+    fn scale(&mut self, k: f32){
+        if (self.rep==Forms::Bin || self.rep==Forms::Coords){
+            self.values.0*=k; self.values.1*=k;
         } else {
-            assert!(false, "Cannot Scale_Bin a not bin form");
-            Complex::new(1.0, 1.0, self.rep)
-        }
-    }
-    fn scale_binself(&mut self, k: f32){
-        if self.rep!=Forms::Exp {
-            self.values.0=self.values.0/k;
-            self.values.1=self.values.1/k;
+            if k!=1.0{
+                let (sign, shift): (f32, f32) = if k<0.0 {
+                    (k*(-1.0), std::f32::consts::PI)
+                } else {
+                    (k, 0.0)
+                };
+                let value = self.to_owned()*Complex::new(sign, shift, Forms::Exp);
+                *self=value;
+            }
+            self.values.1=self.values.1.rem_euclid(std::f32::consts::PI*2.0);
         }
     }
     fn translate_to(&mut self, to: Forms){
@@ -168,7 +170,7 @@ impl Qubit {
                 toreturn.0.1.translate_to(Forms::Coords);
             }
             Forms::Exp => {
-                
+                toreturn.0.0.scale(1.0); //Seems to be unnecesary, but it does theta % pi*2
             }
         }
         toreturn
@@ -189,14 +191,37 @@ impl Qubit {
     }
     fn hadamard(&mut self){
         let alpha = self.0.0;
-        let beta = self.0.1;
+        let mut beta = self.0.1;
 
         let k = 1.0/(2.0_f32.sqrt());
         self.0.0=alpha+beta;
-        self.0.1=alpha+beta.scale_bin(-1.0);
+        beta.scale(-1.0);
+        self.0.1=alpha+beta;
         let norm = (self.0.0+self.0.1).norm();
-        self.0.0.scale_binself(k*norm);
-        self.0.1.scale_binself(k*norm);
+        self.0.0.scale(k*norm);
+        self.0.1.scale(k*norm);
+    }
+    fn px(&mut self){
+        let saved = self.0.0;
+        self.0.0=self.0.1;
+        self.0.1=saved;
+    }
+    fn py(&mut self){
+        let saved = self.0.0;
+        self.0.0=self.0.1*Complex::new(0.0, -1.0, Forms::Bin);
+        self.0.1=saved*Complex::new(0.0, 1.0, Forms::Bin);
+    }
+    fn pz(&mut self){
+        if self.0.1.rep==Forms::Exp {
+            self.0.1=self.0.1*Complex::new(1.0, std::f32::consts::PI, Forms::Exp);
+        } else {
+            self.0.1.scale(-1.0);
+        }
+    }
+    fn phaseshift(&mut self, phi: f32){
+        self.0.1.translate_to(Forms::Exp);
+        self.0.1=self.0.1 * Complex::new(1.0, phi, Forms::Exp);
+        self.0.1.translate_to(self.0.0.rep);
     }
 }
 impl Debug for Qubit{
@@ -210,11 +235,8 @@ impl ToString for Qubit {
     }
 }
 fn main() {
-    let nqubit = Qubit::init(Forms::Bin);
-    let mut nqubit2 = nqubit.collapse();
-    println!("First Qubit {:#?}", nqubit);
-    println!("Collapsing 1: {:#?}", nqubit2);
-    nqubit2.hadamard();
-    println!("Hadamard gate to Collapsed 1: {:#?}", nqubit2);
-    println!("Finally gets collapsed to: {:#?}", nqubit2.collapse());
+    let mut cmplx1: Complex = Complex::new(2.0, 3.14, Forms::Exp);
+    cmplx1.scale(-4.0);
+    println!("{:#?}", cmplx1);
+    //Ive to solve translate_to()
 }
