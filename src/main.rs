@@ -91,7 +91,7 @@ impl Complex {
             self.values.1=self.values.1.rem_euclid(std::f32::consts::PI*2.0);
         }
     }
-    /// Go from one Form of expressing a Complex to another one.
+    /// Converts a Complex number from one form of representation to another.
     /// ### Forms:
     /// ```rust
     /// Forms::Bin // -> Binomial notation
@@ -216,7 +216,7 @@ impl Qubit {
     fn print(&self){
         println!("{:#?}", self);
     }
-    /// Initialize a Qubit automatically (random Complex numbers satisfying |z1|+|z2|=1)
+    /// Initialize a Qubit automatically (random Complex numbers satisfying |z1|²+|z2|²=1)
     /// # Example
     /// ```rust
     /// let qubit1: Qubit = Qubit::init(Forms::Bin);
@@ -237,13 +237,13 @@ impl Qubit {
                 toreturn.0.1.translate_to(Forms::Coords);
             }
             Forms::Exp => {
-                toreturn.0.0.scale(1.0); //Seems to be unnecesary, but it does theta % pi*2
+                toreturn.0.0.scale(1.0); //Seems unnecessary, but it does theta % pi*2
             }
         }
         toreturn
     }
 
-    /// Prints the probabilities to measure basis states
+    /// Prints the probabilities of measuring the system in its basis states
     /// 
     /// # Example
     /// ```rust
@@ -254,7 +254,7 @@ impl Qubit {
         let prob_0 = self.0.0.norm().powi(2);
         println!("P(|0⟩)= {}, P(|1⟩)= {}", prob_0, 1.0-prob_0);
     }
-    /// Collapse Qubit state to one of both basis states.
+    /// Collapse the Qubit state to one of both basis states.
     /// # Example
     /// ```rust
     /// let qubit1: Qubit = Qubit::init(Forms::Bin);
@@ -281,10 +281,9 @@ impl Qubit {
     /// ```rust
     /// let mut qubit1: Qubit = Qubit::init(Forms::Bin);
     /// qubit1.collapse(); // Now, the Qubit collapsed to a basis state
-    /// qubit1.hadarmard(); // Here, the Qubit becomes undetermined
-    /// qubit1.measure(); // Output: 
-    /// 
+    /// qubit1.hadarmard(); // Here, the probabilities of collapsing into |0⟩ or |1⟩, are 50:50. 
     /// ```
+    /// If you use hadamard again, you will return to the basis state again.
     fn hadamard(&mut self){
         let mut buf1 = self.0.0+self.0.1; buf1.scale(1.0/(2.0_f32.sqrt()));
         let mut buf2 = self.0.0-self.0.1; buf2.scale(1.0/(2.0_f32.sqrt()));
@@ -326,11 +325,4 @@ impl ToString for Qubit {
     }
 }
 fn main() {
-    let mut algo = Qubit::init(Forms::Exp);
-    let mut newqubit1 = algo.collapse();
-    newqubit1.hadamard();
-    newqubit1.measure();
-    newqubit1.hadamard();
-    newqubit1.measure();
-    println!("{} {}", newqubit1.0.0.norm(), newqubit1.0.1.norm());
 }
