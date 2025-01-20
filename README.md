@@ -1,13 +1,23 @@
 # qubit-rep
 
-## Simple representation of a Qubit.
-With some gates implemented.
+## Easy and fast representation/simulation of a single qubit.
+With some gates implemented like: Hadamard, Pauli-X, Pauli-Y, Pauli-Z and Phase shift
 
-### Run:
+### Usage:
+
 ```bash
 $ cargo add rand
 $ cargo run
 ```
+### Features:
+- **Qubit Representation**: The qubit is represented as a normalized 2D complex vector: \( \left| \psi \right\rangle = \alpha |0\rangle + \beta |1\rangle \).
+- **Quantum Gates**: Implements common quantum gates:
+  - **Hadamard Gate (H)**
+  - **Pauli-X Gate (X)**
+  - **Pauli-Y Gate (Y)**
+  - **Pauli-Z Gate (Z)**
+  - **Phase Shift Gate**
+
 ### Examples:
 Initialize a Qubit in random state.
 ```rust
