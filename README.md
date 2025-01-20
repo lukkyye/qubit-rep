@@ -9,7 +9,7 @@ $ cargo add rand
 $ cargo run
 ```
 ### Examples:
-Initialize a Qubit in a random state.
+Initialize a Qubit in random state.
 ```rust
   let newqubit: Qubit = Qubit::init(Forms::Bin); //Select your favorite representation for a Complex number Forms::{Bin, Exp, Coords}
 ```
@@ -35,5 +35,12 @@ You can measure probabilities before collapsing:
 ```rust
 let qubit3: Qubit = Qubit::init();
 qubit3.measure() // Output looks like: P(|0⟩)= 0.65050066, P(|1⟩)= 0.34949934
+```
+Pauli-X, Pauli-Y, Pauli-Z gates also included:
+```rust
+let qubit4: Qubit = Qubit::init();
+qubit4.px();
+qubit4.py();
+qubit4.pz();
 ```
 

@@ -223,8 +223,5 @@ impl Qubit {
 }
 
 fn main(){
-    let qbit = Qubit::init(Forms::Exp);
-    qbit.print();
-    qbit.measure();
-    qbit.collapse().print();
+    
 }
