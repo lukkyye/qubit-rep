@@ -10,7 +10,7 @@ $ cargo add rand
 $ cargo run
 ```
 ### Features:
-- **Qubit Representation**: The qubit is represented as a normalized 2D complex vector: \( \left| \psi \right\rangle = \alpha |0\rangle + \beta |1\rangle \).
+- **Qubit Representation**: The qubit is represented as a normalized 2D complex vector: (|ψ⟩ = α|0⟩ + β|1⟩).
 - **Quantum Gates**: Implements common quantum gates:
   - **Hadamard Gate (H)**
   - **Pauli-X Gate (X)**
