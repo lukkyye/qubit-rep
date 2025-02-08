@@ -1,7 +1,7 @@
 #![allow(dead_code)]
-use rand::{self, Rng};
+use ::rand::{self, Rng};
 use std::{f32::NAN, ops::{Add, Index, IndexMut, Mul, Sub}};
-
+use macroquad::{miniquad::window, prelude::*};
 
 #[derive(PartialEq, Clone, Copy)]
 enum Forms {
@@ -130,6 +130,10 @@ impl Complex {
             self.rep=to;
         }
     }
+    fn get_arg(&self)->f32 {
+        assert!(self.rep==Forms::Exp);
+        self.values.1
+    }
 }
 
 struct Qubit([Complex; 2]);
@@ -156,12 +160,10 @@ impl Qubit {
         let mut toreturn = Qubit::new(complex, complex2);
         match rep {
             Forms::Bin => {
-                toreturn[0].translate_to(Forms::Bin);
-                toreturn[1].translate_to(Forms::Bin);
+                toreturn.translate_to(Forms::Bin);
             }
             Forms::Coords => {
-                toreturn[0].translate_to(Forms::Coords);
-                toreturn[1].translate_to(Forms::Coords);
+                toreturn.translate_to(Forms::Coords);
             }
             _=>{
                 toreturn[0].scale(1.0);
@@ -169,6 +171,10 @@ impl Qubit {
             }
         }
         toreturn
+    }
+    fn translate_to(&mut self, form: Forms){
+        self[0].translate_to(form);
+        self[1].translate_to(form);
     }
     fn print(&self){
         println!("|ϕ⟩=({})|0⟩+({})|1⟩", self[0], self[1]);
@@ -222,6 +228,75 @@ impl Qubit {
     }
 }
 
-fn main(){
+async fn view_graph(nqbit: &mut Qubit){
+    assert!(nqbit[0].rep==Forms::Exp, "Error: Qubit form must be Forms::Exp, you should try to view_graph(<qubit_instance>.translate_to(Forms::Exp))");
+    let theta = 2.0*(nqbit[0].norm()).acos();
+    let phi=nqbit[1].get_arg()-nqbit[0].get_arg();
+    println!("{}", nqbit[0].norm().powi(2)+nqbit[1].norm().powi(2));
+    nqbit.print();
+    nqbit.measure();
     
+    
+    let vec = vec3(theta.sin() * phi.cos(),theta.sin() * phi.sin(),theta.cos());
+    println!("({},{},{})",vec[0], vec[1], vec[2]);
+    const ORIGIN3D: Vec3 = vec3(0.0, 0.0, 0.0);
+    let mut camera = Camera3D {
+        position: vec3(3.0, 3.0, 3.0),  // Camera pos (3.0, 3.0, 3.0)
+        target: vec3(0.0, 0.0, 0.0),
+        ..Default::default()
+    };
+
+
+    // Default presets:
+    //==============
+    let mut sphere_opacity: f32 = 0.4;
+
+    //==============
+    loop {
+        clear_background(BLACK);
+        if is_key_down(KeyCode::W) { camera.position.z -= 0.1; }
+        if is_key_down(KeyCode::S) { camera.position.z += 0.1; }
+        if is_key_down(KeyCode::A) { camera.position.x -= 0.1; }
+        if is_key_down(KeyCode::D) { camera.position.x += 0.1; }
+        if is_key_down(KeyCode::Up) { camera.position.y += 0.1; }
+        if is_key_down(KeyCode::Down) { camera.position.y -= 0.1; }
+        if is_key_down(KeyCode::Q) { window::quit(); break;}
+        if is_key_down(KeyCode::Minus) {sphere_opacity-=0.04;}
+        if is_key_down(KeyCode::KpAdd) {sphere_opacity+=0.04;}
+
+        set_camera(&camera);
+
+        
+        
+        //Drawing axis
+        draw_line_3d(vec3(-10.0, 0.0, 0.0), vec3(10.0, 0.0, 0.0), RED);   // Eje X
+        draw_line_3d(vec3(0.0, -10.0,    0.0), vec3(0.0, 10.0, 0.0), GREEN); // Eje Y
+        draw_line_3d(vec3(0.0, 0.0, -10.0), vec3(0.0, 0.0, 10.0), BLUE);  // Eje Z
+        draw_sphere(vec, 0.05, None, RED);
+        
+        for i in -10..=10 {
+            draw_sphere(vec3(i as f32, 0.0, 0.0), 0.02, None, RED);
+            draw_sphere(vec3(0.0, i as f32, 0.0), 0.02, None, GREEN);
+            draw_sphere(vec3(0.0, 0.0, i as f32), 0.02, None, BLUE);
+        }
+        
+        // draw_line_3d(ORIGIN3D, vec3(3.0, 3.0, 3.0), MAGENTA); Camera position at v = 3.0 3.0 3.0
+        
+        //Bloch sphere vector
+        draw_line_3d(ORIGIN3D, vec, WHITE);
+        
+        //Bloch sphere
+        draw_sphere(vec3(0.0, 0.0, 0.0), 1.0, None, Color::new(1.0, 1.0, 1.0, sphere_opacity));
+        
+        
+        set_default_camera();
+        next_frame().await;
+    };
+}
+
+
+#[macroquad::main("Bloch Sphere")]
+async fn main() {
+    let mut nqubit =  Qubit::init(Forms::Exp);
+    let _ = view_graph(&mut nqubit).await;
 }
