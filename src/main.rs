@@ -246,34 +246,31 @@ async fn view_graph(nqbit: &mut Qubit){
         ..Default::default()
     };
 
-
     // Default presets:
     //==============
-    let mut sphere_opacity: f32 = 0.4;
+    let camera_increment: f32= 0.1;
+    let defined_bounds=vec![vec3(-10.0,0.0,0.0), vec3(0.0,-10.0,0.0), vec3(0.0,0.0,-10.0)];
 
-    //==============
+    //==================
     loop {
         clear_background(BLACK);
-        if is_key_down(KeyCode::W) { camera.position.z -= 0.1; }
-        if is_key_down(KeyCode::S) { camera.position.z += 0.1; }
-        if is_key_down(KeyCode::A) { camera.position.x -= 0.1; }
-        if is_key_down(KeyCode::D) { camera.position.x += 0.1; }
-        if is_key_down(KeyCode::Up) { camera.position.y += 0.1; }
-        if is_key_down(KeyCode::Down) { camera.position.y -= 0.1; }
+        if is_key_down(KeyCode::W){camera.position.z+=camera_increment;}
+        if is_key_down(KeyCode::S){camera.position.z-=camera_increment;}
+        if is_key_down(KeyCode::D){camera.position.x+=camera_increment;}
+        if is_key_down(KeyCode::A){camera.position.x-=camera_increment;}
+        if is_key_down(KeyCode::Right){camera.position.y+=camera_increment;}
+        if is_key_down(KeyCode::Left){camera.position.y-=camera_increment;}
         if is_key_down(KeyCode::Q) { window::quit(); break;}
-        if is_key_down(KeyCode::Minus) {sphere_opacity-=0.04;}
-        if is_key_down(KeyCode::KpAdd) {sphere_opacity+=0.04;}
 
         set_camera(&camera);
+        //Axis
+        draw_line_3d(defined_bounds[0],-defined_bounds[0], RED);
+        draw_line_3d(defined_bounds[1], -defined_bounds[1], GREEN);
+        draw_line_3d(defined_bounds[2], -defined_bounds[2], BLUE);
 
-        
-        
-        //Drawing axis
-        draw_line_3d(vec3(-10.0, 0.0, 0.0), vec3(10.0, 0.0, 0.0), RED);   // Eje X
-        draw_line_3d(vec3(0.0, -10.0,    0.0), vec3(0.0, 10.0, 0.0), GREEN); // Eje Y
-        draw_line_3d(vec3(0.0, 0.0, -10.0), vec3(0.0, 0.0, 10.0), BLUE);  // Eje Z
+        //Vec fake arrow
         draw_sphere(vec, 0.05, None, RED);
-        
+
         for i in -10..=10 {
             draw_sphere(vec3(i as f32, 0.0, 0.0), 0.02, None, RED);
             draw_sphere(vec3(0.0, i as f32, 0.0), 0.02, None, GREEN);
@@ -286,12 +283,11 @@ async fn view_graph(nqbit: &mut Qubit){
         draw_line_3d(ORIGIN3D, vec, WHITE);
         
         //Bloch sphere
-        draw_sphere(vec3(0.0, 0.0, 0.0), 1.0, None, Color::new(1.0, 1.0, 1.0, sphere_opacity));
-        
-        
+        draw_sphere_wires(vec3(0.0, 0.0, 0.0), 1.0, None, Color::new(1.0, 1.0, 1.0, 0.5));
         set_default_camera();
         next_frame().await;
     };
+    
 }
 
 
