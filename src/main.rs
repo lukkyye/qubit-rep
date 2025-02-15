@@ -1,115 +1,31 @@
 #![allow(dead_code)]
+mod float;
 mod complex;
-use std::ops::Index;
-use std::ops::IndexMut;
-
-use complex::CartesianComplex;
-use complex::PolarComplex;
-use complex::tcomplex::TComplex;
-
-use num_traits::one;
-use num_traits::zero;
-use num_traits::Float;
-use num_traits::FloatConst;
-
-use ::rand;
-use rand::rng;
-use rand::Rng;
-
-use macroquad::prelude::*;
-use crate::miniquad::window;
+mod qubit;
+use complex::{Complex, PolarComplex};
+use qubit::*;
+use macroquad::{miniquad::window, prelude::*};
 
 
-
-struct Qubit<T>([T; 2]);
-
-impl<T> Index<usize> for Qubit<T>{
-    type Output = T;
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
-    }
-}
-impl<T> IndexMut<usize> for Qubit<T>{
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.0[index]
-    }
-}
-
-impl<T: Float + FloatConst + rand::distr::uniform::SampleUniform + std::fmt::Display> Qubit<PolarComplex<T>>{
-    fn init() -> Self {
-        let mut rng = rng();
-        let arg1 = rng.random_range(T::zero()..=T::TAU());
-        let norm1_squared: T = rng.random_range(T::zero()..=T::one());
-        let norm2_squared: T = T::one() - norm1_squared;
-        let arg2 = rng.random_range(T::zero()..=T::TAU());
-
-        Self([
-            PolarComplex::<T>::new(norm1_squared.sqrt(), arg1),
-            PolarComplex::<T>::new(norm2_squared.sqrt(), arg2),
-        ])
-    }
-    fn print(&self){
-        println!("|φ⟩={}|0⟩+{}|1⟩", self[0], self[1]);
-    }
-    fn measure(&self){
-        let prob_0 = self[0].norm().powi(2);
-        println!("P(|0⟩)= {}, P(|1⟩)= {}", prob_0, T::one()-prob_0)
-    }
-    fn collapse(&self)->Self{
-        let mut thrd = rng();
-        let decider: T = thrd.random_range(T::zero()..=one());
-        if decider<self[0].norm(){
-            Self([
-                PolarComplex::<T>::new(T::one(), zero()),
-                PolarComplex::<T>::new(zero(), zero()),
-            ])
-        }else if decider > self[0].norm(){
-            Self([
-                PolarComplex::<T>::new(zero(), zero()),
-                PolarComplex::<T>::new(T::one(), zero()),
-            ])
-        } else {
-            let pool: [(T, T); 2] = [(zero(), one()), (one(), zero())];
-            let decider2: usize = thrd.random_range(1..=2);
-            let modifier = pool[decider2-1];
-            Self (
-                [
-                    PolarComplex::<T>::new(modifier.0, zero()),
-                    PolarComplex::<T>::new(modifier.1, zero())
-                ]
-            )
-        }
-    }
-}
-impl<T: Float + FloatConst + rand::distr::uniform::SampleUniform + std::fmt::Display> Qubit<CartesianComplex<T>>{
-    fn init()->Self{
-        let mut rng = rng();
-        let arg1 = rng.random_range(T::zero()..=T::TAU());
-        let norm1_squared: T = rng.random_range(T::zero()..=T::one());
-        let norm2_squared: T = T::one() - norm1_squared;
-        let arg2 = rng.random_range(T::zero()..=T::TAU());
-
-        let pivot = [
-            PolarComplex::<T>::new(norm1_squared.sqrt(), arg1),
-            PolarComplex::<T>::new(norm2_squared.sqrt(), arg2),
-        ];
-        return Qubit([pivot[0].into(), pivot[1].into()]);
-    }
-    fn print(&self){
-        println!("|φ⟩={}|0⟩+{}|1⟩", self[0], self[1]);
-    }
-}
-
-async fn view_graph<T: TComplex<K>, K: Float>(qbit: Qubit<T>){
-    let theta = (2.0)*(qbit[0].norm()).acos().to_f32().unwrap();
-    let phi=qbit[1].get_angle().to_f32().unwrap();
+async fn view_graph(nqbit: &mut Qubit<PolarComplex<f32>>){
+    let theta = 2.0*(nqbit.0.norm()).acos();
+    let phi=nqbit.1.arg()-nqbit.0.arg();
+    println!("{}", nqbit.0.norm().powi(2)+nqbit.1.norm().powi(2));
+    nqbit.print();
+    nqbit.measure();
+    
+    
     let vec = vec3(theta.sin() * phi.cos(),theta.sin() * phi.sin(),theta.cos());
+    println!("({},{},{})",vec[0], vec[1], vec[2]);
     const ORIGIN3D: Vec3 = vec3(0.0, 0.0, 0.0);
     let mut camera = Camera3D {
         position: vec3(3.0, 3.0, 3.0),  // Camera pos (3.0, 3.0, 3.0)
         target: vec3(0.0, 0.0, 0.0),
         ..Default::default()
     };
+
+    // Default presets:
+    //==============
     let camera_increment: f32= 0.1;
     let defined_bounds=vec![vec3(-10.0,0.0,0.0), vec3(0.0,-10.0,0.0), vec3(0.0,0.0,-10.0)];
 
@@ -149,12 +65,13 @@ async fn view_graph<T: TComplex<K>, K: Float>(qbit: Qubit<T>){
         set_default_camera();
         next_frame().await;
     };
+    
 }
 
+
 #[macroquad::main("Bloch Sphere")]
-async fn main(){
-    let nqubit= Qubit::<PolarComplex<f64>>::init();
-    nqubit.print();
-    nqubit.measure();
-    view_graph(nqubit).await;
+async fn main() {
+    let mut nqubit: Qubit<PolarComplex<f32>> =  Qubit::init();
+    nqubit.hadamard();
+    let _ = view_graph(&mut nqubit).await;
 }
