@@ -20,6 +20,12 @@ Initialize a qubit undetermined state:
 Note that, you can especify the float and type as `f32` or `f64` (recommended `f32`)
 Also, two complex types are implemented (PolarComplex<T> and CartesianComplex<T>) where T: Float
 
+Otherwise, you can initialize with a basis state determined like |0⟩ or |1⟩
+```rs
+  let qbit1: Qubit<PolarComplex<f64>> = Qubit::init0();
+  // or
+  let qbit2: Qubit<PolarComplex<f64>> = Qubit::init1();
+```
 #### Hadamard gate
 ```rs
   let mut qbit1: Qubit<PolarComplex<f64>> = Qubit::init();
@@ -37,3 +43,10 @@ Also, two complex types are implemented (PolarComplex<T> and CartesianComplex<T>
   qbit1.print();
 ```
 > Example output: " |φ⟩=0.9716602e^(-2.9490366i)|0⟩+0.2363819e^(2.7047591i)|1⟩ "
+#### Measure
+
+```rs
+  let qbit1: Qubit<CartesianComplex<f32>> = Qubit::init();
+  qbit1.measure()
+```
+> Example output: "P(|0⟩)= 0.9597898, P(|1⟩)= 0.040210187"
