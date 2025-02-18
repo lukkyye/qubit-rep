@@ -10,13 +10,10 @@ use macroquad::{miniquad::window, prelude::*};
 async fn view_graph(nqbit: &mut Qubit<PolarComplex<f32>>){
     let theta = 2.0*(nqbit.0.norm()).acos();
     let phi=nqbit.1.arg()-nqbit.0.arg();
-    println!("{}", nqbit.0.norm().powi(2)+nqbit.1.norm().powi(2));
+    
     nqbit.print();
-    nqbit.measure();
-    
-    
+
     let vec = vec3(theta.sin() * phi.cos(),theta.sin() * phi.sin(),theta.cos());
-    println!("({},{},{})",vec[0], vec[1], vec[2]);
     const ORIGIN3D: Vec3 = vec3(0.0, 0.0, 0.0);
     let mut camera = Camera3D {
         position: vec3(3.0, 3.0, 3.0),  // Camera pos (3.0, 3.0, 3.0)
